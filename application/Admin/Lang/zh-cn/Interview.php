@@ -10,6 +10,6 @@ return array(
     "THUMBNAIL" => "缩略图",
     "AUTHOR" => '作者',
     "PUBLISH_DATE" => '发布时间',
-    "INTERVIEW_ADMINPOST_INDEX"=>"文章管理",
-    "INTERVIEW_ADMINPOST_ADD"=>"添加文章"
+    "PORTAL_ADMINPOST_INDEX"=>"文章管理",
+    "PORTAL_ADMINPOST_ADD"=>"添加文章"
 );

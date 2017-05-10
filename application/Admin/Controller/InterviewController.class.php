@@ -12,13 +12,13 @@ use Common\Controller\AdminbaseController;
 
 class InterviewController extends AdminbaseController {
     
-	protected $inter_model;
+	protected $posts_model;
 	protected $term_relationships_model;
 	protected $terms_model;
 	
 	function _initialize() {
 		parent::_initialize();
-		$this->inter_model = D("Common/Interview");
+		$this->posts_model = D("Portal/Posts");
 		$this->terms_model = D("Portal/Terms");
 		$this->term_relationships_model = D("Portal/TermRelationships");
 	}
@@ -46,7 +46,7 @@ class InterviewController extends AdminbaseController {
 		$term=$this->terms_model->where(array('term_id'=>$term_id))->find();
 		$this->assign("term",$term);
 		$this->assign("terms",$terms);
-		$this->display("add");
+		$this->display();
 	}
 	
 	// 文章添加提交
@@ -68,7 +68,7 @@ class InterviewController extends AdminbaseController {
 			$article=I("post.post");
 			$article['smeta']=json_encode($_POST['smeta']);
 			$article['post_content']=htmlspecialchars_decode($article['post_content']);
-			$result=$this->inter_model->add($article);
+			$result=$this->posts_model->add($article);
 			if ($result) {
 				foreach ($_POST['term'] as $mterm_id){
 					$this->term_relationships_model->add(array("term_id"=>intval($mterm_id),"object_id"=>$result));
@@ -89,7 +89,7 @@ class InterviewController extends AdminbaseController {
 		$term_relationship = M('TermRelationships')->where(array("object_id"=>$id,"status"=>1))->getField("term_id",true);
 		$this->_getTermTree($term_relationship);
 		$terms=$this->terms_model->select();
-		$post=$this->inter_model->where("id=$id")->find();
+		$post=$this->posts_model->where("id=$id")->find();
 		$this->assign("post",$post);
 		$this->assign("smeta",json_decode($post['smeta'],true));
 		$this->assign("terms",$terms);
@@ -127,7 +127,7 @@ class InterviewController extends AdminbaseController {
 			$article=I("post.post");
 			$article['smeta']=json_encode($_POST['smeta']);
 			$article['post_content']=htmlspecialchars_decode($article['post_content']);
-			$result=$this->inter_model->save($article);
+			$result=$this->posts_model->save($article);
 			if ($result!==false) {
 				$this->success("保存成功！");
 			} else {
@@ -181,31 +181,31 @@ class InterviewController extends AdminbaseController {
 		    $where['post_title']=array('like',"%$keyword%");
 		}
 			
-		$this->inter_model
+		$this->posts_model
 		->alias("a")
 		->where($where);
 		
 		if(!empty($term_id)){
-		    $this->inter_model->join("__TERM_RELATIONSHIPS__ b ON a.id = b.object_id");
+		    $this->posts_model->join("__TERM_RELATIONSHIPS__ b ON a.id = b.object_id");
 		}
 		
-		$count=$this->inter_model->count();
+		$count=$this->posts_model->count();
 			
 		$page = $this->page($count, 20);
 			
-		$this->inter_model
+		$this->posts_model
 		->alias("a")
 		->join("__USERS__ c ON a.post_author = c.id")
 		->where($where)
 		->limit($page->firstRow , $page->listRows)
 		->order("a.post_date DESC");
 		if(empty($term_id)){
-		    $this->inter_model->field('a.*,c.user_login,c.user_nicename');
+		    $this->posts_model->field('a.*,c.user_login,c.user_nicename');
 		}else{
-		    $this->inter_model->field('a.*,c.user_login,c.user_nicename,b.listorder,b.tid');
-		    $this->inter_model->join("__TERM_RELATIONSHIPS__ b ON a.id = b.object_id");
+		    $this->posts_model->field('a.*,c.user_login,c.user_nicename,b.listorder,b.tid');
+		    $this->posts_model->join("__TERM_RELATIONSHIPS__ b ON a.id = b.object_id");
 		}
-		$posts=$this->inter_model->select();
+		$posts=$this->posts_model->select();
 		
 		$this->assign("page", $page->show('Admin'));
 		$this->assign("formget",array_merge($_GET,$_POST));
@@ -264,7 +264,7 @@ class InterviewController extends AdminbaseController {
 	public function delete(){
 		if(isset($_GET['id'])){
 			$id = I("get.id",0,'intval');
-			if ($this->inter_model->where(array('id'=>$id))->save(array('post_status'=>3)) !==false) {
+			if ($this->posts_model->where(array('id'=>$id))->save(array('post_status'=>3)) !==false) {
 				$this->success("删除成功！");
 			} else {
 				$this->error("删除失败！");
@@ -274,7 +274,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids'])){
 			$ids = I('post.ids/a');
 			
-			if ($this->inter_model->where(array('id'=>array('in',$ids)))->save(array('post_status'=>3))!==false) {
+			if ($this->posts_model->where(array('id'=>array('in',$ids)))->save(array('post_status'=>3))!==false) {
 				$this->success("删除成功！");
 			} else {
 				$this->error("删除失败！");
@@ -287,7 +287,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids']) && $_GET["check"]){
 		    $ids = I('post.ids/a');
 			
-			if ( $this->inter_model->where(array('id'=>array('in',$ids)))->save(array('post_status'=>1)) !== false ) {
+			if ( $this->posts_model->where(array('id'=>array('in',$ids)))->save(array('post_status'=>1)) !== false ) {
 				$this->success("审核成功！");
 			} else {
 				$this->error("审核失败！");
@@ -296,7 +296,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids']) && $_GET["uncheck"]){
 		    $ids = I('post.ids/a');
 		    
-			if ( $this->inter_model->where(array('id'=>array('in',$ids)))->save(array('post_status'=>0)) !== false) {
+			if ( $this->posts_model->where(array('id'=>array('in',$ids)))->save(array('post_status'=>0)) !== false) {
 				$this->success("取消审核成功！");
 			} else {
 				$this->error("取消审核失败！");
@@ -309,7 +309,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids']) && $_GET["top"]){
 			$ids = I('post.ids/a');
 			
-			if ( $this->inter_model->where(array('id'=>array('in',$ids)))->save(array('istop'=>1))!==false) {
+			if ( $this->posts_model->where(array('id'=>array('in',$ids)))->save(array('istop'=>1))!==false) {
 				$this->success("置顶成功！");
 			} else {
 				$this->error("置顶失败！");
@@ -318,7 +318,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids']) && $_GET["untop"]){
 		    $ids = I('post.ids/a');
 		    
-			if ( $this->inter_model->where(array('id'=>array('in',$ids)))->save(array('istop'=>0))!==false) {
+			if ( $this->posts_model->where(array('id'=>array('in',$ids)))->save(array('istop'=>0))!==false) {
 				$this->success("取消置顶成功！");
 			} else {
 				$this->error("取消置顶失败！");
@@ -331,7 +331,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids']) && $_GET["recommend"]){
 			$ids = I('post.ids/a');
 			
-			if ( $this->inter_model->where(array('id'=>array('in',$ids)))->save(array('recommended'=>1))!==false) {
+			if ( $this->posts_model->where(array('id'=>array('in',$ids)))->save(array('recommended'=>1))!==false) {
 				$this->success("推荐成功！");
 			} else {
 				$this->error("推荐失败！");
@@ -340,7 +340,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids']) && $_GET["unrecommend"]){
 		    $ids = I('post.ids/a');
 		    
-			if ( $this->inter_model->where(array('id'=>array('in',$ids)))->save(array('recommended'=>0))!==false) {
+			if ( $this->posts_model->where(array('id'=>array('in',$ids)))->save(array('recommended'=>0))!==false) {
 				$this->success("取消推荐成功！");
 			} else {
 				$this->error("取消推荐失败！");
@@ -406,12 +406,12 @@ class InterviewController extends AdminbaseController {
 	            $data=array();
 	            
 	            foreach ($ids as $id){
-	                $find_post=$this->inter_model->field('post_keywords,post_source,post_content,post_title,post_excerpt,smeta')->where(array('id'=>$id))->find();
+	                $find_post=$this->posts_model->field('post_keywords,post_source,post_content,post_title,post_excerpt,smeta')->where(array('id'=>$id))->find();
 	                if($find_post){
 	                    $find_post['post_author']=$uid;
 	                    $find_post['post_date']=date('Y-m-d H:i:s');
 	                    $find_post['post_modified']=date('Y-m-d H:i:s');
-	                    $post_id=$this->inter_model->add($find_post);
+	                    $post_id=$this->posts_model->add($find_post);
 	                    if($post_id>0){
 	                        array_push($data, array('object_id'=>$post_id,'term_id'=>$term_id));
 	                    }
@@ -456,7 +456,7 @@ class InterviewController extends AdminbaseController {
 		if(isset($_POST['ids'])){
 			$ids = I('post.ids/a');
 			$ids = array_map('intval', $ids);
-			$status=$this->inter_model->where(array("id"=>array('in',$ids),'post_status'=>3))->delete();
+			$status=$this->posts_model->where(array("id"=>array('in',$ids),'post_status'=>3))->delete();
 			$this->term_relationships_model->where(array('object_id'=>array('in',$ids)))->delete();
 			
 			if ($status!==false) {
@@ -467,7 +467,7 @@ class InterviewController extends AdminbaseController {
 		}else{
 			if(isset($_GET['id'])){
 				$id = I("get.id",0,'intval');
-				$status=$this->inter_model->where(array("id"=>$id,'post_status'=>3))->delete();
+				$status=$this->posts_model->where(array("id"=>$id,'post_status'=>3))->delete();
 				$this->term_relationships_model->where(array('object_id'=>$id))->delete();
 				
 				if ($status!==false) {
@@ -483,7 +483,7 @@ class InterviewController extends AdminbaseController {
 	public function restore(){
 		if(isset($_GET['id'])){
 			$id = I("get.id",0,'intval');
-			if ($this->inter_model->where(array("id"=>$id,'post_status'=>3))->save(array("post_status"=>"1"))) {
+			if ($this->posts_model->where(array("id"=>$id,'post_status'=>3))->save(array("post_status"=>"1"))) {
 				$this->success("还原成功！");
 			} else {
 				$this->error("还原失败！");
